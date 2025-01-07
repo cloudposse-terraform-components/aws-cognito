@@ -38,5 +38,5 @@ resource "aws_cognito_resource_server" "resource" {
     }
   }
 
-  user_pool_id = join("", aws_cognito_user_pool.pool.*.id)
+  user_pool_id = join("", aws_cognito_user_pool.pool[*].id)
 }

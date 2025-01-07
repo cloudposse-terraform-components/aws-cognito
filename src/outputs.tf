@@ -28,22 +28,22 @@ output "last_modified_date" {
 #
 output "domain_aws_account_id" {
   description = "The AWS account ID for the User Pool domain"
-  value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain.*.aws_account_id) : null
+  value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain[*].aws_account_id) : null
 }
 
 output "domain_cloudfront_distribution_arn" {
   description = "The ARN of the CloudFront distribution for the domain"
-  value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain.*.cloudfront_distribution_arn) : null
+  value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain[*].cloudfront_distribution_arn) : null
 }
 
 output "domain_s3_bucket" {
   description = "The S3 bucket where the static files for the domain are stored"
-  value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain.*.s3_bucket) : null
+  value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain[*].s3_bucket) : null
 }
 
 output "domain_app_version" {
   description = "The app version for the domain"
-  value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain.*.version) : null
+  value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain[*].version) : null
 }
 
 #
@@ -51,12 +51,12 @@ output "domain_app_version" {
 #
 output "client_ids" {
   description = "The ids of the User Pool clients"
-  value       = local.enabled ? aws_cognito_user_pool_client.client.*.id : null
+  value       = local.enabled ? aws_cognito_user_pool_client.client[*].id : null
 }
 
 output "client_secrets" {
   description = " The client secrets of the User Pool clients"
-  value       = local.enabled ? aws_cognito_user_pool_client.client.*.client_secret : null
+  value       = local.enabled ? aws_cognito_user_pool_client.client[*].client_secret : null
   sensitive   = true
 }
 

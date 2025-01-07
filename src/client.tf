@@ -67,7 +67,7 @@ resource "aws_cognito_user_pool_client" "client" {
   supported_identity_providers         = lookup(element(local.clients, count.index), "supported_identity_providers", null)
   prevent_user_existence_errors        = lookup(element(local.clients, count.index), "prevent_user_existence_errors", null)
   write_attributes                     = lookup(element(local.clients, count.index), "write_attributes", null)
-  user_pool_id                         = join("", aws_cognito_user_pool.pool.*.id)
+  user_pool_id                         = join("", aws_cognito_user_pool.pool[*].id)
 
   dynamic "token_validity_units" {
     for_each = length(lookup(element(local.clients, count.index), "token_validity_units", {})) == 0 ? [] : [lookup(element(local.clients, count.index), "token_validity_units")]
