@@ -25,9 +25,9 @@ locals {
 resource "aws_cognito_user_group" "main" {
   count = local.enabled ? length(local.groups) : 0
 
-  name         = lookup(element(local.groups, count.index), "name")
-  description  = lookup(element(local.groups, count.index), "description")
-  precedence   = lookup(element(local.groups, count.index), "precedence")
-  role_arn     = lookup(element(local.groups, count.index), "role_arn")
+  name         = lookup(element(local.groups, count.index), "name", null)
+  description  = lookup(element(local.groups, count.index), "description", null)
+  precedence   = lookup(element(local.groups, count.index), "precedence", null)
+  role_arn     = lookup(element(local.groups, count.index), "role_arn", null)
   user_pool_id = join("", aws_cognito_user_pool.pool[*].id)
 }
