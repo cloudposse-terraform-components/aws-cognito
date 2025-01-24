@@ -70,7 +70,9 @@ resource "aws_cognito_user_pool_client" "client" {
   user_pool_id                         = join("", aws_cognito_user_pool.pool[*].id)
 
   dynamic "token_validity_units" {
-    for_each = length(lookup(element(local.clients, count.index), "token_validity_units", {})) == 0 ? [] : [lookup(element(local.clients, count.index), "token_validity_units")]
+    for_each = length(lookup(element(local.clients, count.index), "token_validity_units", [])) == 0 ? [] : [lookup(element(local.clients, count.index), "token_validity_units", null)]
+}
+
     content {
       access_token  = lookup(token_validity_units.value, "access_token", null)
       id_token      = lookup(token_validity_units.value, "id_token", null)
