@@ -71,14 +71,13 @@ resource "aws_cognito_user_pool_client" "client" {
 
   dynamic "token_validity_units" {
     for_each = length(lookup(element(local.clients, count.index), "token_validity_units", [])) == 0 ? [] : [lookup(element(local.clients, count.index), "token_validity_units", null)]
-  }
 
-  content {
-    access_token  = lookup(token_validity_units.value, "access_token", null)
-    id_token      = lookup(token_validity_units.value, "id_token", null)
-    refresh_token = lookup(token_validity_units.value, "refresh_token", null)
+    content {
+      access_token  = lookup(token_validity_units.value, "access_token", null)
+      id_token      = lookup(token_validity_units.value, "id_token", null)
+      refresh_token = lookup(token_validity_units.value, "refresh_token", null)
+    }
   }
-
 
   depends_on = [
     aws_cognito_resource_server.resource,
