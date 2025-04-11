@@ -332,4 +332,13 @@ resource "aws_cognito_user_pool" "pool" {
   }
 
   tags = module.this.tags
+
+  # https://github.com/hashicorp/terraform-provider-aws/issues/21654
+  lifecycle {
+    ignore_changes = [
+      lambda_config,
+      password_policy,
+      schema
+    ]
+  }
 }
