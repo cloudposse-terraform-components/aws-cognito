@@ -32,7 +32,7 @@ output "domain_aws_account_id" {
 }
 
 output "domain_cloudfront_distribution_arn" {
-  description = "The ARN of the CloudFront distribution for the domain"
+  description = "The URL of the CloudFront distribution"
   value       = local.enabled ? join("", aws_cognito_user_pool_domain.domain[*].cloudfront_distribution_arn) : null
 }
 
