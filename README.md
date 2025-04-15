@@ -224,7 +224,7 @@ components:
 | <a name="output_creation_date"></a> [creation\_date](#output\_creation\_date) | The date the User Pool was created |
 | <a name="output_domain_app_version"></a> [domain\_app\_version](#output\_domain\_app\_version) | The app version for the domain |
 | <a name="output_domain_aws_account_id"></a> [domain\_aws\_account\_id](#output\_domain\_aws\_account\_id) | The AWS account ID for the User Pool domain |
-| <a name="output_domain_cloudfront_distribution_arn"></a> [domain\_cloudfront\_distribution\_arn](#output\_domain\_cloudfront\_distribution\_arn) | The ARN of the CloudFront distribution for the domain |
+| <a name="output_domain_cloudfront_distribution_arn"></a> [domain\_cloudfront\_distribution\_arn](#output\_domain\_cloudfront\_distribution\_arn) | The URL of the CloudFront distribution |
 | <a name="output_domain_s3_bucket"></a> [domain\_s3\_bucket](#output\_domain\_s3\_bucket) | The S3 bucket where the static files for the domain are stored |
 | <a name="output_endpoint"></a> [endpoint](#output\_endpoint) | The endpoint name of the User Pool. Example format: cognito-idp.REGION.amazonaws.com/xxxx\_yyyyy |
 | <a name="output_id"></a> [id](#output\_id) | The ID of the User Pool |
