@@ -27,14 +27,14 @@ locals {
 resource "aws_cognito_resource_server" "resource" {
   count = local.enabled ? length(local.resource_servers) : 0
 
-  name       = lookup(element(local.resource_servers, count.index), "name")
-  identifier = lookup(element(local.resource_servers, count.index), "identifier")
+  name       = element(local.resource_servers, count.index)["name"]
+  identifier = element(local.resource_servers, count.index)["identifier"]
 
   dynamic "scope" {
-    for_each = lookup(element(local.resource_servers, count.index), "scope")
+    for_each = element(local.resource_servers, count.index)["scope"]
     content {
-      scope_name        = lookup(scope.value, "scope_name")
-      scope_description = lookup(scope.value, "scope_description")
+      scope_name        = scope.value["scope_name"]
+      scope_description = scope.value["scope_description"]
     }
   }
 
