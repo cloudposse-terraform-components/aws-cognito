@@ -1,0 +1,54 @@
+components:
+  terraform:
+    cognito/risk-config-disabled:
+      metadata:
+        component: target
+      vars:
+        enabled: false  # Module disabled - risk configuration should not be created
+        mfa_configuration: "OPTIONAL"
+        software_token_mfa_configuration_enabled: "true"
+        auto_verified_attributes:
+          - "email"
+        client_name: "test-client"
+        user_pool_name: "test-pool-risk-disabled"
+        client_token_validity_units:
+          access_token: "days"
+          id_token: "days"
+          refresh_token: "days"
+        client_refresh_token_validity: 30
+        client_access_token_validity: 1
+        client_id_token_validity: 1
+        client_supported_identity_providers:
+          - "COGNITO"
+        client_allowed_oauth_flows_user_pool_client: true
+        client_allowed_oauth_flows:
+          - "code"
+        client_allowed_oauth_scopes:
+          - "email"
+          - "openid"
+          - "phone"
+        client_generate_secret: false
+        client_explicit_auth_flows:
+          - "ALLOW_USER_SRP_AUTH"
+          - "ALLOW_REFRESH_TOKEN_AUTH"
+        client_prevent_user_existence_errors: "ENABLED"
+        name: cognito-risk-disabled
+        schemas:
+          - name: "email"
+            attribute_data_type: "String"
+            developer_only_attribute: false
+            mutable: false
+            required: true
+        # Risk configuration provided but module disabled
+        account_takeover_risk_configuration:
+          notify_configuration:
+            block_email:
+              html_body: "<p>This should not be created when disabled.</p>"
+              subject: "Should Not Be Created"
+              text_body: "This should not be created when disabled."
+            from: "disabled@example.com"
+            source_arn: "arn:aws:ses:us-east-2:123456789012:identity/example.com"
+          actions:
+            high_action:
+              event_action: "BLOCK"
+              notify: true

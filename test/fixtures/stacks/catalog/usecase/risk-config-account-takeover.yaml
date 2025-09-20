@@ -1,0 +1,69 @@
+components:
+  terraform:
+    cognito/risk-config-account-takeover:
+      metadata:
+        component: target
+      vars:
+        enabled: true
+        mfa_configuration: "OPTIONAL"
+        software_token_mfa_configuration_enabled: "true"
+        auto_verified_attributes:
+          - "email"
+        client_name: "test-client"
+        user_pool_name: "test-pool-risk-account-takeover"
+        client_token_validity_units:
+          access_token: "days"
+          id_token: "days"
+          refresh_token: "days"
+        client_refresh_token_validity: 30
+        client_access_token_validity: 1
+        client_id_token_validity: 1
+        client_supported_identity_providers:
+          - "COGNITO"
+        client_allowed_oauth_flows_user_pool_client: true
+        client_allowed_oauth_flows:
+          - "code"
+        client_allowed_oauth_scopes:
+          - "email"
+          - "openid"
+          - "phone"
+        client_generate_secret: false
+        client_explicit_auth_flows:
+          - "ALLOW_USER_SRP_AUTH"
+          - "ALLOW_REFRESH_TOKEN_AUTH"
+        client_prevent_user_existence_errors: "ENABLED"
+        name: cognito-risk-account-takeover
+        schemas:
+          - name: "email"
+            attribute_data_type: "String"
+            developer_only_attribute: false
+            mutable: false
+            required: true
+        # Account takeover risk configuration only
+        account_takeover_risk_configuration:
+          notify_configuration:
+            block_email:
+              html_body: "<p>Your account has been blocked due to suspicious activity.</p>"
+              subject: "Account Blocked - Suspicious Activity"
+              text_body: "Your account has been blocked due to suspicious activity."
+            mfa_email:
+              html_body: "<p>Please complete MFA to verify your identity.</p>"
+              subject: "MFA Required - Account Verification"
+              text_body: "Please complete MFA to verify your identity."
+            no_action_email:
+              html_body: "<p>We detected unusual activity on your account.</p>"
+              subject: "Account Activity Alert"
+              text_body: "We detected unusual activity on your account."
+            from: "noreply@example.com"
+            reply_to: "security@example.com"
+            source_arn: "arn:aws:ses:us-east-2:123456789012:identity/example.com"
+          actions:
+            high_action:
+              event_action: "BLOCK"
+              notify: true
+            medium_action:
+              event_action: "MFA_IF_CONFIGURED"
+              notify: true
+            low_action:
+              event_action: "NO_ACTION"
+              notify: false

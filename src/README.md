@@ -42,6 +42,161 @@ components:
             required: true
 ```
 
+### Risk Configuration Examples
+
+#### Basic Account Takeover Protection
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        # Configure account takeover risk protection
+        account_takeover_risk_configuration:
+          notify_configuration:
+            block_email:
+              html_body: "Your account has been blocked due to suspicious activity."
+              subject: "Account Security Alert"
+              text_body: "Your account has been blocked due to suspicious activity."
+            from: "security@[company].com"
+            source_arn: "arn:aws:ses:us-east-1:[account-id]:identity/security@[company].com"
+          actions:
+            high_action:
+              event_action: "BLOCK"
+              notify: true
+            medium_action:
+              event_action: "MFA_REQUIRED"
+              notify: true
+            low_action:
+              event_action: "NO_ACTION"
+              notify: false
+```
+
+#### Compromised Credentials Detection
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        # Configure compromised credentials detection
+        compromised_credentials_risk_configuration:
+          event_filter: ["SIGN_IN", "PASSWORD_CHANGE"]
+          actions:
+            event_action: "BLOCK"
+```
+
+#### IP-Based Risk Exceptions
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        # Configure IP-based risk exceptions
+        risk_exception_configuration:
+          blocked_ip_range_list:
+            - "192.0.2.0/24"    # Block this IP range
+            - "203.0.113.0/24"  # Block this IP range
+          skipped_ip_range_list:
+            - "10.0.0.0/8"      # Skip risk detection for internal network
+            - "172.16.0.0/12"   # Skip risk detection for private network
+```
+
+#### Client-Specific Risk Configuration
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        clients:
+          - name: "web-app"
+            generate_secret: false
+          - name: "mobile-app"
+            generate_secret: true
+        # Configure risk settings for specific clients
+        risk_configurations:
+          - client_id: "web-app"
+            account_takeover_risk_configuration:
+              actions:
+                high_action:
+                  event_action: "BLOCK"
+                  notify: false
+                medium_action:
+                  event_action: "MFA_IF_CONFIGURED"
+                  notify: false
+                low_action:
+                  event_action: "NO_ACTION"
+                  notify: false
+          - client_id: "mobile-app"
+            compromised_credentials_risk_configuration:
+              event_filter: ["SIGN_IN"]
+              actions:
+                event_action: "BLOCK"
+```
+
+#### Comprehensive Risk Configuration
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        # Comprehensive risk configuration with all features
+        risk_configurations:
+          - # Global User Pool configuration
+            account_takeover_risk_configuration:
+              notify_configuration:
+                block_email:
+                  html_body: "<h1>Security Alert</h1><p>Your account has been temporarily blocked due to suspicious activity.</p>"
+                  subject: "Account Security Alert - Action Required"
+                  text_body: "Your account has been temporarily blocked due to suspicious activity. Please contact support."
+                mfa_email:
+                  html_body: "<h1>Additional Verification Required</h1><p>We detected unusual activity and require additional verification.</p>"
+                  subject: "Additional Verification Required"
+                  text_body: "We detected unusual activity and require additional verification."
+                no_action_email:
+                  html_body: "<h1>Security Notice</h1><p>We detected some unusual activity but no action is required.</p>"
+                  subject: "Security Notice"
+                  text_body: "We detected some unusual activity but no action is required."
+                from: "security@[company].com"
+                reply_to: "noreply@[company].com"
+                source_arn: "arn:aws:ses:us-east-1:[account-id]:identity/security@[company].com"
+              actions:
+                high_action:
+                  event_action: "BLOCK"
+                  notify: true
+                medium_action:
+                  event_action: "MFA_REQUIRED"
+                  notify: true
+                low_action:
+                  event_action: "NO_ACTION"
+                  notify: true
+            compromised_credentials_risk_configuration:
+              event_filter: ["SIGN_IN", "PASSWORD_CHANGE", "SIGN_UP"]
+              actions:
+                event_action: "BLOCK"
+            risk_exception_configuration:
+              blocked_ip_range_list:
+                - "192.0.2.0/24"
+                - "203.0.113.0/24"
+              skipped_ip_range_list:
+                - "10.0.0.0/8"
+                - "172.16.0.0/12"
+                - "192.168.0.0/16"
+```
+
 <!-- prettier-ignore-start -->
 <!-- prettier-ignore-end -->
 
@@ -224,4 +379,3 @@ components:
 
 
 [<img src="https://cloudposse.com/logo-300x69.svg" height="32" align="right"/>](https://cpco.io/homepage?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-cognito&utm_content=)
-

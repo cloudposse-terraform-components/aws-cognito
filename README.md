@@ -40,6 +40,7 @@ This component can provision the following resources:
 - [Cognito User Pool Identity Providers](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-identity-provider.html)
 - [Cognito User Pool Resource Servers](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-define-resource-servers.html)
 - [Cognito User Pool User Groups](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-user-groups.html)
+- [Cognito Risk Configuration](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-risk-configuration.html)
 
 
 > [!TIP]
@@ -80,6 +81,163 @@ components:
             developer_only_attribute: false
             mutable: false
             required: true
+```
+
+### Risk Configuration Examples
+
+#### Basic Account Takeover Protection
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        # Configure account takeover risk protection
+        account_takeover_risk_configuration:
+          notify_configuration:
+            block_email:
+              html_body: "Your account has been blocked due to suspicious activity."
+              subject: "Account Security Alert"
+              text_body: "Your account has been blocked due to suspicious activity."
+            from: "security@[company].com"
+            source_arn: "arn:aws:ses:us-east-1:[account-id]:identity/security@[company].com"
+          actions:
+            high_action:
+              event_action: "BLOCK"
+              notify: true
+            medium_action:
+              event_action: "MFA_REQUIRED"
+              notify: true
+            low_action:
+              event_action: "NO_ACTION"
+              notify: false
+```
+
+#### Compromised Credentials Detection
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        # Configure compromised credentials detection
+        compromised_credentials_risk_configuration:
+          event_filter: ["SIGN_IN", "PASSWORD_CHANGE"]
+          actions:
+            event_action: "BLOCK"
+```
+
+#### IP-Based Risk Exceptions
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        # Configure IP-based risk exceptions
+        risk_exception_configuration:
+          blocked_ip_range_list:
+            - "192.0.2.0/24"    # Block this IP range
+            - "203.0.113.0/24"  # Block this IP range
+          skipped_ip_range_list:
+            - "10.0.0.0/8"      # Skip risk detection for internal network
+            - "172.16.0.0/12"   # Skip risk detection for private network
+```
+
+#### Client-Specific Risk Configuration
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        clients:
+          - name: "web-app"
+            generate_secret: false
+          - name: "mobile-app"
+            generate_secret: true
+        # Configure risk settings for specific clients
+        risk_configurations:
+          - client_id: "${module.cognito.client_ids_map['web-app']}"
+            account_takeover_risk_configuration:
+              actions:
+                high_action:
+                  event_action: "BLOCK"
+                  notify: false
+                medium_action:
+                  event_action: "MFA_IF_CONFIGURED"
+                  notify: false
+                low_action:
+                  event_action: "NO_ACTION"
+                  notify: false
+          - client_id: "${module.cognito.client_ids_map['mobile-app']}"
+            compromised_credentials_risk_configuration:
+              event_filter: ["SIGN_IN"]
+              actions:
+                event_action: "BLOCK"
+```
+
+**Note:** `client_id` must be the app client ID, not the client name. Resolve it (e.g., via `outputs.client_ids_map`) before passing here.
+
+#### Comprehensive Risk Configuration
+
+```yaml
+components:
+  terraform:
+    cognito:
+      vars:
+        enabled: true
+        name: cognito
+        # Comprehensive risk configuration with all features
+        risk_configurations:
+          - # Global User Pool configuration
+            account_takeover_risk_configuration:
+              notify_configuration:
+                block_email:
+                  html_body: "<h1>Security Alert</h1><p>Your account has been temporarily blocked due to suspicious activity.</p>"
+                  subject: "Account Security Alert - Action Required"
+                  text_body: "Your account has been temporarily blocked due to suspicious activity. Please contact support."
+                mfa_email:
+                  html_body: "<h1>Additional Verification Required</h1><p>We detected unusual activity and require additional verification.</p>"
+                  subject: "Additional Verification Required"
+                  text_body: "We detected unusual activity and require additional verification."
+                no_action_email:
+                  html_body: "<h1>Security Notice</h1><p>We detected some unusual activity but no action is required.</p>"
+                  subject: "Security Notice"
+                  text_body: "We detected some unusual activity but no action is required."
+                from: "security@[company].com"
+                reply_to: "noreply@[company].com"
+                source_arn: "arn:aws:ses:us-east-1:[account-id]:identity/security@[company].com"
+              actions:
+                high_action:
+                  event_action: "BLOCK"
+                  notify: true
+                medium_action:
+                  event_action: "MFA_REQUIRED"
+                  notify: true
+                low_action:
+                  event_action: "NO_ACTION"
+                  notify: true
+            compromised_credentials_risk_configuration:
+              event_filter: ["SIGN_IN", "PASSWORD_CHANGE", "SIGN_UP"]
+              actions:
+                event_action: "BLOCK"
+            risk_exception_configuration:
+              blocked_ip_range_list:
+                - "192.0.2.0/24"
+                - "203.0.113.0/24"
+              skipped_ip_range_list:
+                - "10.0.0.0/8"
+                - "172.16.0.0/12"
+                - "192.168.0.0/16"
 ```
 
 <!-- prettier-ignore-start -->
@@ -125,6 +283,7 @@ components:
 |------|------|
 | [aws_cognito_identity_provider.identity_provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_identity_provider) | resource |
 | [aws_cognito_resource_server.resource](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_resource_server) | resource |
+| [aws_cognito_risk_configuration.risk_config](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_risk_configuration) | resource |
 | [aws_cognito_user_group.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_user_group) | resource |
 | [aws_cognito_user_pool.pool](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_user_pool) | resource |
 | [aws_cognito_user_pool_client.client](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_user_pool_client) | resource |
@@ -244,6 +403,11 @@ components:
 | <a name="input_verification_message_template_default_email_option"></a> [verification\_message\_template\_default\_email\_option](#input\_verification\_message\_template\_default\_email\_option) | The default email option. Must be either `CONFIRM_WITH_CODE` or `CONFIRM_WITH_LINK`. Defaults to `CONFIRM_WITH_CODE` | `string` | `null` | no |
 | <a name="input_verification_message_template_email_message_by_link"></a> [verification\_message\_template\_email\_message\_by\_link](#input\_verification\_message\_template\_email\_message\_by\_link) | The email message template for sending a confirmation link to the user, it must contain the `{##Click Here##}` placeholder | `string` | `null` | no |
 | <a name="input_verification_message_template_email_subject_by_link"></a> [verification\_message\_template\_email\_subject\_by\_link](#input\_verification\_message\_template\_email\_subject\_by\_link) | The subject line for the email message template for sending a confirmation link to the user | `string` | `null` | no |
+| <a name="input_account_takeover_risk_configuration"></a> [account\_takeover\_risk\_configuration](#input\_account\_takeover\_risk\_configuration) | Account takeover risk configuration settings. Configures detection and response to suspicious authentication attempts | `any` | `{}` | no |
+| <a name="input_compromised_credentials_risk_configuration"></a> [compromised\_credentials\_risk\_configuration](#input\_compromised\_credentials\_risk\_configuration) | Compromised credentials risk configuration settings. Configures detection of known compromised passwords | `any` | `{}` | no |
+| <a name="input_risk_configurations"></a> [risk\_configurations](#input\_risk\_configurations) | List of risk configuration objects for the User Pool. Each configuration can be applied globally or to specific clients | `list(any)` | `[]` | no |
+| <a name="input_risk_configuration_client_id"></a> [risk\_configuration\_client\_id](#input\_risk\_configuration\_client\_id) | The app client ID for risk configuration. If not provided, applies to all clients in the User Pool | `string` | `null` | no |
+| <a name="input_risk_exception_configuration"></a> [risk\_exception\_configuration](#input\_risk\_exception\_configuration) | Risk exception configuration for IP-based overrides. Allows blocking or bypassing risk detection for specific IP ranges | `any` | `{}` | no |
 
 ## Outputs
 
@@ -263,6 +427,8 @@ components:
 | <a name="output_id"></a> [id](#output\_id) | The ID of the User Pool |
 | <a name="output_last_modified_date"></a> [last\_modified\_date](#output\_last\_modified\_date) | The date the User Pool was last modified |
 | <a name="output_resource_servers_scope_identifiers"></a> [resource\_servers\_scope\_identifiers](#output\_resource\_servers\_scope\_identifiers) | A list of all scopes configured in the format identifier/scope\_name |
+| <a name="output_risk_configuration_ids"></a> [risk\_configuration\_ids](#output\_risk\_configuration\_ids) | The IDs of the risk configurations |
+| <a name="output_risk_configuration_ids_map"></a> [risk\_configuration\_ids\_map](#output\_risk\_configuration\_ids\_map) | Map of risk configuration IDs by client ID (or 'global' for User Pool-wide) |
 <!-- markdownlint-restore -->
 
 
@@ -324,7 +490,7 @@ For additional context, refer to some of these links.
 > - **Customer Workshops.** Engage with our team in weekly workshops, gaining insights and strategies to continuously improve and innovate.
 >
 > <a href="https://cpco.io/commercial-support?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-cognito&utm_content=commercial_support"><img alt="Request Quote" src="https://img.shields.io/badge/request%20quote-success.svg?style=for-the-badge"/></a>
-> 
+>
 </details>
 
 ## ✨ Contributing
@@ -367,15 +533,15 @@ Setup dependencies:
 
 To run tests:
 
-- Run all tests:  
+- Run all tests:
   ```sh
   atmos test run
   ```
-- Clean up test artifacts:  
+- Clean up test artifacts:
   ```sh
   atmos test clean
   ```
-- Explore additional test options:  
+- Explore additional test options:
   ```sh
   atmos test --help
   ```

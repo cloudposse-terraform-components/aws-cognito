@@ -1,0 +1,75 @@
+components:
+  terraform:
+    cognito/risk-config-client-specific:
+      metadata:
+        component: target
+      vars:
+        enabled: true
+        mfa_configuration: "OPTIONAL"
+        software_token_mfa_configuration_enabled: "true"
+        auto_verified_attributes:
+          - "email"
+        client_name: "test-client"
+        user_pool_name: "test-pool-risk-client-specific"
+        client_token_validity_units:
+          access_token: "days"
+          id_token: "days"
+          refresh_token: "days"
+        client_refresh_token_validity: 30
+        client_access_token_validity: 1
+        client_id_token_validity: 1
+        client_supported_identity_providers:
+          - "COGNITO"
+        client_allowed_oauth_flows_user_pool_client: true
+        client_allowed_oauth_flows:
+          - "code"
+        client_allowed_oauth_scopes:
+          - "email"
+          - "openid"
+          - "phone"
+        client_generate_secret: false
+        client_explicit_auth_flows:
+          - "ALLOW_USER_SRP_AUTH"
+          - "ALLOW_REFRESH_TOKEN_AUTH"
+        client_prevent_user_existence_errors: "ENABLED"
+        name: cognito-risk-client-specific
+        schemas:
+          - name: "email"
+            attribute_data_type: "String"
+            developer_only_attribute: false
+            mutable: false
+            required: true
+        # Client-specific risk configuration using individual variables
+        risk_configuration_client_id: "test-client-id"
+        account_takeover_risk_configuration:
+          notify_configuration:
+            block_email:
+              html_body: "<p>Client-specific: Your account has been blocked.</p>"
+              subject: "Client Account Blocked"
+              text_body: "Client-specific: Your account has been blocked."
+            mfa_email:
+              html_body: "<p>Client-specific: Please complete MFA.</p>"
+              subject: "Client MFA Required"
+              text_body: "Client-specific: Please complete MFA."
+            no_action_email:
+              html_body: "<p>Client-specific: Unusual activity detected.</p>"
+              subject: "Client Activity Alert"
+              text_body: "Client-specific: Unusual activity detected."
+            from: "client@example.com"
+            reply_to: "security@example.com"
+            source_arn: "arn:aws:ses:us-east-2:123456789012:identity/example.com"
+          actions:
+            high_action:
+              event_action: "BLOCK"
+              notify: true
+            medium_action:
+              event_action: "MFA_IF_CONFIGURED"
+              notify: true
+            low_action:
+              event_action: "NO_ACTION"
+              notify: false
+        compromised_credentials_risk_configuration:
+          event_filter:
+            - "SIGN_IN"
+          actions:
+            event_action: "BLOCK"

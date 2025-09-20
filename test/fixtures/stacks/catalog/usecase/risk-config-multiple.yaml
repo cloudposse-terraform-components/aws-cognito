@@ -1,0 +1,82 @@
+components:
+  terraform:
+    cognito/risk-config-multiple:
+      metadata:
+        component: target
+      vars:
+        enabled: true
+        mfa_configuration: "OPTIONAL"
+        software_token_mfa_configuration_enabled: "true"
+        auto_verified_attributes:
+          - "email"
+        client_name: "test-client"
+        user_pool_name: "test-pool-risk-multiple"
+        client_token_validity_units:
+          access_token: "days"
+          id_token: "days"
+          refresh_token: "days"
+        client_refresh_token_validity: 30
+        client_access_token_validity: 1
+        client_id_token_validity: 1
+        client_supported_identity_providers:
+          - "COGNITO"
+        client_allowed_oauth_flows_user_pool_client: true
+        client_allowed_oauth_flows:
+          - "code"
+        client_allowed_oauth_scopes:
+          - "email"
+          - "openid"
+          - "phone"
+        client_generate_secret: false
+        client_explicit_auth_flows:
+          - "ALLOW_USER_SRP_AUTH"
+          - "ALLOW_REFRESH_TOKEN_AUTH"
+        client_prevent_user_existence_errors: "ENABLED"
+        name: cognito-risk-multiple
+        schemas:
+          - name: "email"
+            attribute_data_type: "String"
+            developer_only_attribute: false
+            mutable: false
+            required: true
+        # Multiple risk configurations using object-style configuration
+        risk_configurations:
+          - # Global risk configuration (no client_id)
+            account_takeover_risk_configuration:
+              notify_configuration:
+                block_email:
+                  html_body: "<p>Global: Your account has been blocked.</p>"
+                  subject: "Global Account Blocked"
+                  text_body: "Global: Your account has been blocked."
+                mfa_email:
+                  html_body: "<p>Global: Please complete MFA.</p>"
+                  subject: "Global MFA Required"
+                  text_body: "Global: Please complete MFA."
+                no_action_email:
+                  html_body: "<p>Global: Unusual activity detected.</p>"
+                  subject: "Global Activity Alert"
+                  text_body: "Global: Unusual activity detected."
+                from: "global@example.com"
+                reply_to: "security@example.com"
+                source_arn: "arn:aws:ses:us-east-2:123456789012:identity/example.com"
+              actions:
+                high_action:
+                  event_action: "BLOCK"
+                  notify: true
+                medium_action:
+                  event_action: "MFA_REQUIRED"
+                  notify: true
+                low_action:
+                  event_action: "NO_ACTION"
+                  notify: false
+            compromised_credentials_risk_configuration:
+              event_filter:
+                - "SIGN_IN"
+                - "PASSWORD_CHANGE"
+              actions:
+                event_action: "BLOCK"
+            risk_exception_configuration:
+              blocked_ip_range_list:
+                - "192.168.1.0/24"
+              skipped_ip_range_list:
+                - "172.16.0.0/12"

@@ -559,3 +559,124 @@ variable "deletion_protection" {
   type        = string
   default     = "INACTIVE"
 }
+
+variable "risk_configurations" {
+  description = "List of risk configuration objects for the User Pool. Each configuration can be applied globally or to specific clients"
+  type = list(object({
+    client_id = optional(string)
+    account_takeover_risk_configuration = optional(object({
+      notify_configuration = optional(object({
+        block_email = optional(object({
+          html_body = optional(string)
+          subject   = optional(string)
+          text_body = optional(string)
+        }))
+        mfa_email = optional(object({
+          html_body = optional(string)
+          subject   = optional(string)
+          text_body = optional(string)
+        }))
+        no_action_email = optional(object({
+          html_body = optional(string)
+          subject   = optional(string)
+          text_body = optional(string)
+        }))
+        from       = optional(string)
+        reply_to   = optional(string)
+        source_arn = optional(string)
+      }))
+      actions = optional(object({
+        high_action = optional(object({
+          event_action = string
+          notify       = optional(bool)
+        }))
+        medium_action = optional(object({
+          event_action = string
+          notify       = optional(bool)
+        }))
+        low_action = optional(object({
+          event_action = string
+          notify       = optional(bool)
+        }))
+      }))
+    }))
+    compromised_credentials_risk_configuration = optional(object({
+      event_filter = optional(list(string))
+      actions = optional(object({
+        event_action = string
+      }))
+    }))
+    risk_exception_configuration = optional(object({
+      blocked_ip_range_list = optional(list(string))
+      skipped_ip_range_list = optional(list(string))
+    }))
+  }))
+  default = []
+}
+
+variable "risk_configuration_client_id" {
+  description = "The app client ID for risk configuration. If not provided, applies to all clients in the User Pool"
+  type        = string
+  default     = null
+}
+
+variable "account_takeover_risk_configuration" {
+  description = "Account takeover risk configuration settings. Configures detection and response to suspicious authentication attempts"
+  type = object({
+    notify_configuration = optional(object({
+      block_email = optional(object({
+        html_body = optional(string)
+        subject   = optional(string)
+        text_body = optional(string)
+      }))
+      mfa_email = optional(object({
+        html_body = optional(string)
+        subject   = optional(string)
+        text_body = optional(string)
+      }))
+      no_action_email = optional(object({
+        html_body = optional(string)
+        subject   = optional(string)
+        text_body = optional(string)
+      }))
+      from       = optional(string)
+      reply_to   = optional(string)
+      source_arn = optional(string)
+    }))
+    actions = optional(object({
+      high_action = optional(object({
+        event_action = string
+        notify       = optional(bool)
+      }))
+      medium_action = optional(object({
+        event_action = string
+        notify       = optional(bool)
+      }))
+      low_action = optional(object({
+        event_action = string
+        notify       = optional(bool)
+      }))
+    }))
+  })
+  default = {}
+}
+
+variable "compromised_credentials_risk_configuration" {
+  description = "Compromised credentials risk configuration settings. Configures detection of known compromised passwords"
+  type = object({
+    event_filter = optional(list(string))
+    actions = optional(object({
+      event_action = string
+    }))
+  })
+  default = {}
+}
+
+variable "risk_exception_configuration" {
+  description = "Risk exception configuration for IP-based overrides. Allows blocking or bypassing risk detection for specific IP ranges"
+  type = object({
+    blocked_ip_range_list = optional(list(string))
+    skipped_ip_range_list = optional(list(string))
+  })
+  default = {}
+}
