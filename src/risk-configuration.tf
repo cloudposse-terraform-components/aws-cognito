@@ -3,17 +3,17 @@ data "aws_region" "current" {}
 
 locals {
   # Helper function to check if a configuration object has meaningful content
-  has_account_takeover_config = length(coalesce(var.account_takeover_risk_configuration, {})) > 0 && (
+  has_account_takeover_config = var.account_takeover_risk_configuration != null && length(var.account_takeover_risk_configuration) > 0 && (
     lookup(var.account_takeover_risk_configuration, "actions", null) != null ||
     lookup(var.account_takeover_risk_configuration, "notify_configuration", null) != null
   )
 
-  has_compromised_credentials_config = length(coalesce(var.compromised_credentials_risk_configuration, {})) > 0 && (
+  has_compromised_credentials_config = var.compromised_credentials_risk_configuration != null && length(var.compromised_credentials_risk_configuration) > 0 && (
     lookup(var.compromised_credentials_risk_configuration, "actions", null) != null ||
     lookup(var.compromised_credentials_risk_configuration, "event_filter", null) != null
   )
 
-  has_risk_exception_config = length(coalesce(var.risk_exception_configuration, {})) > 0 && (
+  has_risk_exception_config = var.risk_exception_configuration != null && length(var.risk_exception_configuration) > 0 && (
     length(coalesce(lookup(var.risk_exception_configuration, "blocked_ip_range_list", null), [])) > 0 ||
     length(coalesce(lookup(var.risk_exception_configuration, "skipped_ip_range_list", null), [])) > 0
   )
@@ -68,7 +68,7 @@ locals {
 resource "aws_cognito_risk_configuration" "risk_config" {
   count = local.enabled ? length(local.risk_configurations) : 0
 
-  user_pool_id = join("", aws_cognito_user_pool.pool[*].id)
+  user_pool_id = element(aws_cognito_user_pool.pool[*].id, 0)
   # Resolve client_name to client_id if needed, otherwise use provided client_id
   # Returns null when resolution fails (zero or multiple matches) - lifecycle precondition validates correctness
   client_id = coalesce(
@@ -85,6 +85,12 @@ resource "aws_cognito_risk_configuration" "risk_config" {
 
   # Validation for client_name resolution
   lifecycle {
+    # Validate that exactly one user pool exists
+    precondition {
+      condition     = length(aws_cognito_user_pool.pool) == 1
+      error_message = "Risk configuration requires exactly one user pool to exist. Found ${length(aws_cognito_user_pool.pool)} pools."
+    }
+
     # Validate that if client_name is provided, it resolves to exactly one valid client_id
     precondition {
       condition = (
