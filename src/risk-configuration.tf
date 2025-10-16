@@ -68,7 +68,7 @@ locals {
 resource "aws_cognito_risk_configuration" "risk_config" {
   count = local.enabled ? length(local.risk_configurations) : 0
 
-  user_pool_id = one(aws_cognito_user_pool.pool[*].id)
+  user_pool_id = join("", aws_cognito_user_pool.pool[*].id)
   # Resolve client_name to client_id if needed, otherwise use provided client_id
   # Returns null when resolution fails (zero or multiple matches) - lifecycle precondition validates correctness
   client_id = coalesce(
@@ -128,11 +128,11 @@ resource "aws_cognito_risk_configuration" "risk_config" {
 
     precondition {
       condition = lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", null) == null || (
-        # If any action has notify = true, notify_configuration must be provided with required fields
+        # If any action has notify != false (including unset/null, which defaults to true), notify_configuration must be provided
         !(
-          lookup(lookup(lookup(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}), "actions", {}), "high_action", {}), "notify", false) == true ||
-          lookup(lookup(lookup(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}), "actions", {}), "medium_action", {}), "notify", false) == true ||
-          lookup(lookup(lookup(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}), "actions", {}), "low_action", {}), "notify", false) == true
+          lookup(lookup(lookup(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}), "actions", {}), "high_action", {}), "notify", false) != false ||
+          lookup(lookup(lookup(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}), "actions", {}), "medium_action", {}), "notify", false) != false ||
+          lookup(lookup(lookup(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}), "actions", {}), "low_action", {}), "notify", false) != false
           ) || (
           # notify_configuration must be provided with source_arn when notifications are enabled
           lookup(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}), "notify_configuration", null) != null &&
@@ -150,7 +150,7 @@ resource "aws_cognito_risk_configuration" "risk_config" {
           ))
         )
       )
-      error_message = "When any action has notify = true, notify_configuration must be provided with a valid SES source_arn in this account and region."
+      error_message = "When any action has notify != false (including unset, which defaults to true), notify_configuration must be provided with a valid SES source_arn in this account and region."
     }
 
     # Validation for compromised credentials risk configuration
@@ -182,7 +182,10 @@ resource "aws_cognito_risk_configuration" "risk_config" {
   }
 
   dynamic "account_takeover_risk_configuration" {
-    for_each = lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", null) != null && length(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {})) > 0 ? [lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {})] : []
+    for_each = (
+      lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", null) != null &&
+      length(coalesce(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", null), {})) > 0
+    ) ? [lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {})] : []
 
     content {
       dynamic "notify_configuration" {
@@ -267,7 +270,10 @@ resource "aws_cognito_risk_configuration" "risk_config" {
   }
 
   dynamic "compromised_credentials_risk_configuration" {
-    for_each = lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", null) != null && length(lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", {})) > 0 ? [lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", {})] : []
+    for_each = (
+      lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", null) != null &&
+      length(coalesce(lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", null), {})) > 0
+    ) ? [lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", {})] : []
 
     content {
       event_filter = lookup(compromised_credentials_risk_configuration.value, "event_filter", null)
@@ -288,9 +294,13 @@ resource "aws_cognito_risk_configuration" "risk_config" {
   # AWS limits: Maximum 200 IP ranges per list
   # AWS requires at least one of blocked_ip_range_list or skipped_ip_range_list
   dynamic "risk_exception_configuration" {
-    for_each = lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", null) != null && length(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {})) > 0 && (
-      lookup(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {}), "blocked_ip_range_list", null) != null ||
-      lookup(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {}), "skipped_ip_range_list", null) != null
+    for_each = (
+      lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", null) != null &&
+      length(coalesce(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", null), {})) > 0 &&
+      (
+        lookup(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {}), "blocked_ip_range_list", null) != null ||
+        lookup(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {}), "skipped_ip_range_list", null) != null
+      )
     ) ? [lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {})] : []
 
     content {
