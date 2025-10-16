@@ -1,18 +1,19 @@
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 locals {
   # Helper function to check if a configuration object has meaningful content
-  has_account_takeover_config = length(var.account_takeover_risk_configuration) > 0 && (
+  has_account_takeover_config = length(coalesce(var.account_takeover_risk_configuration, {})) > 0 && (
     lookup(var.account_takeover_risk_configuration, "actions", null) != null ||
     lookup(var.account_takeover_risk_configuration, "notify_configuration", null) != null
   )
 
-  has_compromised_credentials_config = length(var.compromised_credentials_risk_configuration) > 0 && (
+  has_compromised_credentials_config = length(coalesce(var.compromised_credentials_risk_configuration, {})) > 0 && (
     lookup(var.compromised_credentials_risk_configuration, "actions", null) != null ||
     lookup(var.compromised_credentials_risk_configuration, "event_filter", null) != null
   )
 
-  has_risk_exception_config = length(var.risk_exception_configuration) > 0 && (
+  has_risk_exception_config = length(coalesce(var.risk_exception_configuration, {})) > 0 && (
     length(coalesce(lookup(var.risk_exception_configuration, "blocked_ip_range_list", null), [])) > 0 ||
     length(coalesce(lookup(var.risk_exception_configuration, "skipped_ip_range_list", null), [])) > 0
   )
@@ -20,7 +21,7 @@ locals {
 
 
   # Create a map of client names to client IDs for lookups
-  client_name_to_id_map = local.enabled ? { for k, v in aws_cognito_user_pool_client.client : v.name => v.id } : {}
+  client_name_to_id_map = local.enabled ? { for _, v in aws_cognito_user_pool_client.client : v.name => v.id } : {}
 
   # Default configuration using individual variables (only if they have meaningful content)
   risk_configuration_default = local.has_account_takeover_config || local.has_compromised_credentials_config || local.has_risk_exception_config ? {
@@ -67,19 +68,17 @@ locals {
 resource "aws_cognito_risk_configuration" "risk_config" {
   count = local.enabled ? length(local.risk_configurations) : 0
 
-  user_pool_id = join("", aws_cognito_user_pool.pool[*].id)
+  user_pool_id = one(aws_cognito_user_pool.pool[*].id)
   # Resolve client_name to client_id if needed, otherwise use provided client_id
   # Returns null when resolution fails (zero or multiple matches) - lifecycle precondition validates correctness
   client_id = coalesce(
     lookup(element(local.risk_configurations, count.index), "client_id", null),
     try(
-      length([
-        for client in aws_cognito_user_pool_client.client :
-        client.id if client.name == lookup(element(local.risk_configurations, count.index), "client_name", null)
-        ]) == 1 ? [
-        for client in aws_cognito_user_pool_client.client :
-        client.id if client.name == lookup(element(local.risk_configurations, count.index), "client_name", null)
-      ][0] : null,
+      lookup(
+        local.client_name_to_id_map,
+        lookup(element(local.risk_configurations, count.index), "client_name", null),
+        null
+      ),
       null
     )
   )
@@ -90,6 +89,7 @@ resource "aws_cognito_risk_configuration" "risk_config" {
     precondition {
       condition = (
         lookup(element(local.risk_configurations, count.index), "client_name", null) == null ||
+        lookup(element(local.risk_configurations, count.index), "client_id", null) != null ||
         length([
           for client in aws_cognito_user_pool_client.client :
           client.id if client.name == lookup(element(local.risk_configurations, count.index), "client_name", null)
@@ -139,7 +139,7 @@ resource "aws_cognito_risk_configuration" "risk_config" {
           lookup(lookup(lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}), "notify_configuration", {}), "source_arn", null) != null &&
           # enforce SES ARN belongs to this account & region
           can(regex(
-            "^arn:[^:]*:ses:${var.region}:${data.aws_caller_identity.current.account_id}:.+$",
+            "^arn:[^:]*:ses:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:.+$",
             lookup(
               lookup(
                 lookup(element(local.risk_configurations, count.index), "account_takeover_risk_configuration", {}),
@@ -161,6 +161,23 @@ resource "aws_cognito_risk_configuration" "risk_config" {
         lookup(lookup(lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", {}), "actions", {}), "event_action", null) != null
       )
       error_message = "When compromised_credentials_risk_configuration is present, an 'actions' block with 'event_action' is required. AWS requires this field to specify how to handle compromised credentials (BLOCK or NO_ACTION)."
+    }
+
+    # Validation for risk exception configuration
+    precondition {
+      condition = lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", null) == null || (
+        length(coalesce(lookup(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {}), "blocked_ip_range_list", null), [])) > 0 ||
+        length(coalesce(lookup(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {}), "skipped_ip_range_list", null), [])) > 0
+      )
+      error_message = "When risk_exception_configuration is present, at least one of blocked_ip_range_list or skipped_ip_range_list must contain ≥1 CIDR."
+    }
+
+    precondition {
+      condition = lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", null) == null || (
+        length(coalesce(lookup(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {}), "blocked_ip_range_list", null), [])) <= 200 &&
+        length(coalesce(lookup(lookup(element(local.risk_configurations, count.index), "risk_exception_configuration", {}), "skipped_ip_range_list", null), [])) <= 200
+      )
+      error_message = "AWS allows up to 200 CIDRs per list in risk_exception_configuration."
     }
   }
 
@@ -286,6 +303,7 @@ resource "aws_cognito_risk_configuration" "risk_config" {
       skipped_ip_range_list = lookup(risk_exception_configuration.value, "skipped_ip_range_list", null)
     }
   }
+
 
   depends_on = [
     aws_cognito_user_pool.pool,
