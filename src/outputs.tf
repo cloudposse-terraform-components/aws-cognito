@@ -78,3 +78,19 @@ output "resource_servers_scope_identifiers" {
   description = " A list of all scopes configured in the format identifier/scope_name"
   value       = local.enabled ? aws_cognito_resource_server.resource[*].scope_identifiers : null
 }
+
+#
+# aws_cognito_risk_configuration
+#
+output "risk_configuration_ids" {
+  description = "The IDs of the risk configurations"
+  value       = local.enabled ? aws_cognito_risk_configuration.risk_config[*].id : null
+}
+
+output "risk_configuration_ids_map" {
+  description = "Map of risk configuration IDs by client ID (or 'global' for User Pool-wide)"
+  value = local.enabled ? {
+    for k, v in aws_cognito_risk_configuration.risk_config :
+    (v.client_id != null ? v.client_id : "global") => v.id
+  } : null
+}
