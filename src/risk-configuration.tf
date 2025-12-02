@@ -71,7 +71,7 @@ resource "aws_cognito_risk_configuration" "risk_config" {
   user_pool_id = element(aws_cognito_user_pool.pool[*].id, 0)
   # Resolve client_name to client_id if needed, otherwise use provided client_id
   # Returns null when resolution fails (zero or multiple matches) - lifecycle precondition validates correctness
-  client_id = coalesce(
+  client_id = try(coalesce(
     lookup(element(local.risk_configurations, count.index), "client_id", null),
     try(
       lookup(
@@ -81,7 +81,7 @@ resource "aws_cognito_risk_configuration" "risk_config" {
       ),
       null
     )
-  )
+  ), null)
 
   # Validation for client_name resolution
   lifecycle {
@@ -278,7 +278,7 @@ resource "aws_cognito_risk_configuration" "risk_config" {
   dynamic "compromised_credentials_risk_configuration" {
     for_each = (
       lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", null) != null &&
-      length(coalesce(lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", null), {})) > 0
+      length(lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", {})) > 0
     ) ? [lookup(element(local.risk_configurations, count.index), "compromised_credentials_risk_configuration", {})] : []
 
     content {

@@ -695,7 +695,7 @@ variable "compromised_credentials_risk_configuration" {
       var.compromised_credentials_risk_configuration.actions == null ||
       (
         contains(keys(var.compromised_credentials_risk_configuration.actions), "event_action") &&
-        length(trim(var.compromised_credentials_risk_configuration.actions.event_action)) > 0
+        length(trimspace(var.compromised_credentials_risk_configuration.actions.event_action)) > 0
       )
     )
     error_message = "When compromised_credentials_risk_configuration.actions is provided, it must include a non-empty 'event_action' field. Valid values are 'BLOCK' or 'NO_ACTION'."
