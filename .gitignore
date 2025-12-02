@@ -76,3 +76,6 @@ github/
 *.ovpn
 
 *.zip
+
+# Test files
+test/test_suite.yaml
