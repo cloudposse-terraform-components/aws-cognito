@@ -2,3 +2,10 @@ import:
   - orgs/default/test/_defaults
   - catalog/usecase/basic
   - catalog/usecase/disabled
+  - catalog/usecase/risk-config-empty
+  - catalog/usecase/risk-config-account-takeover
+  - catalog/usecase/risk-config-compromised-credentials
+  - catalog/usecase/risk-config-risk-exception
+  - catalog/usecase/risk-config-multiple
+  - catalog/usecase/risk-config-client-specific
+  - catalog/usecase/risk-config-disabled

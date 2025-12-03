@@ -406,6 +406,12 @@ variable "client_default_redirect_uri" {
   default     = ""
 }
 
+variable "client_enable_propagate_additional_user_context_data" {
+  description = "Set to true to enable the propagation of additional user context data. See AWS documentation for more details"
+  type        = bool
+  default     = false
+}
+
 variable "client_explicit_auth_flows" {
   description = "List of authentication flows (ADMIN_NO_SRP_AUTH, CUSTOM_AUTH_FLOW_ONLY, USER_PASSWORD_AUTH)"
   type        = list(string)
@@ -480,6 +486,18 @@ variable "client_token_validity_units" {
     id_token      = "minutes"
     refresh_token = "days"
   }
+}
+
+variable "client_auth_session_validity" {
+  description = "The duration, in minutes, of a user session. The default is 3 minutes and the maximum is 1440 minutes (24 hours)."
+  type        = number
+  default     = 3
+}
+
+variable "client_enable_token_revocation" {
+  description = "Set to true to enable token revocation for the user pool client"
+  type        = bool
+  default     = false
 }
 
 variable "user_groups" {
@@ -558,4 +576,137 @@ variable "deletion_protection" {
   description = "(Optional) When active, DeletionProtection prevents accidental deletion of your user pool. Before you can delete a user pool that you have protected against deletion, you must deactivate this feature. Valid values are ACTIVE and INACTIVE, Default value is INACTIVE."
   type        = string
   default     = "INACTIVE"
+}
+
+variable "risk_configurations" {
+  description = "List of risk configuration objects for the User Pool. Each configuration can be applied globally or to specific clients"
+  type = list(object({
+    client_id   = optional(string)
+    client_name = optional(string)
+    account_takeover_risk_configuration = optional(object({
+      notify_configuration = optional(object({
+        block_email = optional(object({
+          html_body = optional(string)
+          subject   = optional(string)
+          text_body = optional(string)
+        }))
+        mfa_email = optional(object({
+          html_body = optional(string)
+          subject   = optional(string)
+          text_body = optional(string)
+        }))
+        no_action_email = optional(object({
+          html_body = optional(string)
+          subject   = optional(string)
+          text_body = optional(string)
+        }))
+        from       = optional(string)
+        reply_to   = optional(string)
+        source_arn = optional(string)
+      }))
+      actions = optional(object({
+        high_action = optional(object({
+          event_action = string
+          notify       = optional(bool)
+        }))
+        medium_action = optional(object({
+          event_action = string
+          notify       = optional(bool)
+        }))
+        low_action = optional(object({
+          event_action = string
+          notify       = optional(bool)
+        }))
+      }))
+    }))
+    compromised_credentials_risk_configuration = optional(object({
+      event_filter = optional(list(string))
+      actions = optional(object({
+        event_action = string
+      }))
+    }))
+    risk_exception_configuration = optional(object({
+      blocked_ip_range_list = optional(list(string))
+      skipped_ip_range_list = optional(list(string))
+    }))
+  }))
+  default = []
+}
+
+variable "risk_configuration_client_id" {
+  description = "The app client ID for risk configuration. If not provided, applies to all clients in the User Pool"
+  type        = string
+  default     = null
+}
+
+variable "account_takeover_risk_configuration" {
+  description = "Account takeover risk configuration settings. Configures detection and response to suspicious authentication attempts"
+  type = object({
+    notify_configuration = optional(object({
+      block_email = optional(object({
+        html_body = optional(string)
+        subject   = optional(string)
+        text_body = optional(string)
+      }))
+      mfa_email = optional(object({
+        html_body = optional(string)
+        subject   = optional(string)
+        text_body = optional(string)
+      }))
+      no_action_email = optional(object({
+        html_body = optional(string)
+        subject   = optional(string)
+        text_body = optional(string)
+      }))
+      from       = optional(string)
+      reply_to   = optional(string)
+      source_arn = optional(string)
+    }))
+    actions = optional(object({
+      high_action = optional(object({
+        event_action = string
+        notify       = optional(bool)
+      }))
+      medium_action = optional(object({
+        event_action = string
+        notify       = optional(bool)
+      }))
+      low_action = optional(object({
+        event_action = string
+        notify       = optional(bool)
+      }))
+    }))
+  })
+  default = {}
+}
+
+variable "compromised_credentials_risk_configuration" {
+  description = "Compromised credentials risk configuration settings. Configures detection of known compromised passwords"
+  type = object({
+    event_filter = optional(list(string))
+    actions = optional(object({
+      event_action = string
+    }))
+  })
+  default = {}
+
+  validation {
+    condition = (
+      var.compromised_credentials_risk_configuration.actions == null ||
+      (
+        contains(keys(var.compromised_credentials_risk_configuration.actions), "event_action") &&
+        length(trimspace(var.compromised_credentials_risk_configuration.actions.event_action)) > 0
+      )
+    )
+    error_message = "When compromised_credentials_risk_configuration.actions is provided, it must include a non-empty 'event_action' field. Valid values are 'BLOCK' or 'NO_ACTION'."
+  }
+}
+
+variable "risk_exception_configuration" {
+  description = "Risk exception configuration for IP-based overrides. Allows blocking or bypassing risk detection for specific IP ranges"
+  type = object({
+    blocked_ip_range_list = optional(list(string))
+    skipped_ip_range_list = optional(list(string))
+  })
+  default = {}
 }
