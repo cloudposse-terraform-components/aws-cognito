@@ -8,5 +8,9 @@ terraform {
       # https://github.com/hashicorp/terraform-provider-aws/releases
       version = ">= 4.51.0, < 6.0.0"
     }
+    utils = {
+      source  = "cloudposse/utils"
+      version = ">= 2.0.0, < 3.0.0"
+    }
   }
 }
