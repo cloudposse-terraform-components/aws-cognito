@@ -6,7 +6,7 @@ components:
       vars:
         enabled: true
         mfa_configuration: "OPTIONAL"
-        software_token_mfa_configuration_enabled: "true"
+        software_token_mfa_configuration_enabled: true
         auto_verified_attributes:
           - "email"
         client_name: "test-client"

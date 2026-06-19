@@ -64,7 +64,7 @@ func (s *ComponentSuite) TestCognito() {
 	assert.Greater(s.T(), len(clientIDMap), 0)
 
 	scopeIdentifiers := outputStringList(s.T(), options, "resource_servers_scope_identifiers")
-	assert.GreaterOrEqual(s.T(), len(scopeIdentifiers), 0)
+	assert.Empty(s.T(), scopeIdentifiers)
 
 	s.DriftTest(component, stack, &inputs)
 }
