@@ -401,7 +401,7 @@ func outputValue(t *testing.T, options *atmos.Options, key string) any {
 }
 
 func outputAll(t *testing.T, options *atmos.Options) map[string]any {
-	out, err := atmos.RunAtmosCommandAndGetStdoutE(t, options, "terraform", "output", options.Component, "--skip-init", "-s", options.Stack, "--format=json")
+	out, err := atmos.RunAtmosCommandAndGetStdoutE(t, options, "terraform", "output", options.Component, "--skip-init", "-s", options.Stack, "-json")
 	require.NoError(t, err)
 
 	start := strings.Index(out, "{")
