@@ -1,6 +1,6 @@
 components:
   terraform:
-    cognito/risk-config-client-specific:
+    cognito/managed-login:
       metadata:
         component: target
       vars:
@@ -10,7 +10,9 @@ components:
         auto_verified_attributes:
           - "email"
         client_name: "test-client"
-        user_pool_name: "test-pool-risk-client-specific"
+        user_pool_name: "test-pool-managed-login"
+        user_pool_tier: "ESSENTIALS"
+        managed_login_version: 2
         client_token_validity_units:
           access_token: "days"
           id_token: "days"
@@ -27,30 +29,19 @@ components:
           - "email"
           - "openid"
           - "phone"
+          - "profile"
         client_generate_secret: false
         client_explicit_auth_flows:
           - "ALLOW_USER_SRP_AUTH"
           - "ALLOW_REFRESH_TOKEN_AUTH"
         client_prevent_user_existence_errors: "ENABLED"
-        name: cognito-risk-client-specific
-        schemas:
+        name: cognito
+        string_schemas:
           - name: "email"
             attribute_data_type: "String"
             developer_only_attribute: false
             mutable: false
             required: true
-        # Client-specific risk configuration
-        # NOTE: Account takeover removed as it requires SES setup
-        # Using risk_configurations list with client_name to test client-specific configuration
-        risk_configurations:
-          - client_name: "test-client" # Reference by name, module should resolve to actual ID
-            compromised_credentials_risk_configuration:
-              event_filter:
-                - "SIGN_IN"
-                - "PASSWORD_CHANGE"
-              actions:
-                event_action: "BLOCK"
-            risk_exception_configuration:
-              skipped_ip_range_list:
-                - "10.0.0.0/8"
-                - "172.16.0.0/12"
+            string_attribute_constraints:
+              min_length: 0
+              max_length: 2048

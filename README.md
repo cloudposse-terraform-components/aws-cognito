@@ -75,7 +75,9 @@ components:
         enabled: true
         # The full name of the User Pool will be: <namespace>-<environment>-<stage>-<name>
         name: cognito
-        schemas:
+        user_pool_tier: ESSENTIALS
+        managed_login_version: 2
+        string_schemas:
           - name: "email"
             attribute_data_type: "String"
             developer_only_attribute: false
@@ -289,27 +291,26 @@ components:
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.51.0, < 6.0.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0.0, < 7.0.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.51.0, < 6.0.0 |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
-| <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | ../account-map/modules/iam-roles | n/a |
+| ---- | ------ | ------- |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_cognito_identity_provider.identity_provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_identity_provider) | resource |
 | [aws_cognito_resource_server.resource](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_resource_server) | resource |
 | [aws_cognito_risk_configuration.risk_config](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_risk_configuration) | resource |
@@ -323,7 +324,7 @@ components:
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_account_takeover_risk_configuration"></a> [account\_takeover\_risk\_configuration](#input\_account\_takeover\_risk\_configuration) | Account takeover risk configuration settings. Configures detection and response to suspicious authentication attempts | <pre>object({<br/>    notify_configuration = optional(object({<br/>      block_email = optional(object({<br/>        html_body = optional(string)<br/>        subject   = optional(string)<br/>        text_body = optional(string)<br/>      }))<br/>      mfa_email = optional(object({<br/>        html_body = optional(string)<br/>        subject   = optional(string)<br/>        text_body = optional(string)<br/>      }))<br/>      no_action_email = optional(object({<br/>        html_body = optional(string)<br/>        subject   = optional(string)<br/>        text_body = optional(string)<br/>      }))<br/>      from       = optional(string)<br/>      reply_to   = optional(string)<br/>      source_arn = optional(string)<br/>    }))<br/>    actions = optional(object({<br/>      high_action = optional(object({<br/>        event_action = string<br/>        notify       = optional(bool)<br/>      }))<br/>      medium_action = optional(object({<br/>        event_action = string<br/>        notify       = optional(bool)<br/>      }))<br/>      low_action = optional(object({<br/>        event_action = string<br/>        notify       = optional(bool)<br/>      }))<br/>    }))<br/>  })</pre> | `{}` | no |
 | <a name="input_additional_tag_map"></a> [additional\_tag\_map](#input\_additional\_tag\_map) | Additional key-value pairs to add to each map in `tags_as_list_of_maps`. Not added to `tags` or `id`.<br/>This is for some rare cases where resources want additional configuration of tags<br/>and therefore take a list of maps with tag key, value, and additional configuration. | `map(string)` | `{}` | no |
 | <a name="input_admin_create_user_config"></a> [admin\_create\_user\_config](#input\_admin\_create\_user\_config) | The configuration for AdminCreateUser requests | `map(any)` | `{}` | no |
@@ -394,6 +395,7 @@ components:
 | <a name="input_lambda_config_pre_token_generation"></a> [lambda\_config\_pre\_token\_generation](#input\_lambda\_config\_pre\_token\_generation) | Allow to customize identity token claims before token generation | `string` | `""` | no |
 | <a name="input_lambda_config_user_migration"></a> [lambda\_config\_user\_migration](#input\_lambda\_config\_user\_migration) | The user migration Lambda config type | `string` | `""` | no |
 | <a name="input_lambda_config_verify_auth_challenge_response"></a> [lambda\_config\_verify\_auth\_challenge\_response](#input\_lambda\_config\_verify\_auth\_challenge\_response) | Verifies the authentication challenge response | `string` | `""` | no |
+| <a name="input_managed_login_version"></a> [managed\_login\_version](#input\_managed\_login\_version) | The managed login version for the user pool domain. Use `1` for hosted UI classic or `2` for managed login | `number` | `2` | no |
 | <a name="input_mfa_configuration"></a> [mfa\_configuration](#input\_mfa\_configuration) | Multi-factor authentication configuration. Must be one of the following values (ON, OFF, OPTIONAL) | `string` | `"OFF"` | no |
 | <a name="input_name"></a> [name](#input\_name) | ID element. Usually the component or solution name, e.g. 'app' or 'jenkins'.<br/>This is the only ID element not also included as a `tag`.<br/>The "name" tag is set to the full `id` string. There is no tag with the value of the `name` input. | `string` | `null` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | ID element. Usually an abbreviation of your organization name, e.g. 'eg' or 'cp', to help ensure generated IDs are globally unique | `string` | `null` | no |
@@ -436,6 +438,7 @@ components:
 | <a name="input_user_pool_add_ons"></a> [user\_pool\_add\_ons](#input\_user\_pool\_add\_ons) | Configuration block for user pool add-ons to enable user pool advanced security mode features | `map(any)` | `{}` | no |
 | <a name="input_user_pool_add_ons_advanced_security_mode"></a> [user\_pool\_add\_ons\_advanced\_security\_mode](#input\_user\_pool\_add\_ons\_advanced\_security\_mode) | The mode for advanced security, must be one of `OFF`, `AUDIT` or `ENFORCED` | `string` | `null` | no |
 | <a name="input_user_pool_name"></a> [user\_pool\_name](#input\_user\_pool\_name) | User pool name. If not provided, the name will be generated from the context | `string` | `null` | no |
+| <a name="input_user_pool_tier"></a> [user\_pool\_tier](#input\_user\_pool\_tier) | The user pool feature plan. Must be one of `LITE`, `ESSENTIALS`, or `PLUS` | `string` | `"ESSENTIALS"` | no |
 | <a name="input_username_attributes"></a> [username\_attributes](#input\_username\_attributes) | Specifies whether email addresses or phone numbers can be specified as usernames when a user signs up. Conflicts with `alias_attributes` | `list(string)` | `null` | no |
 | <a name="input_username_configuration"></a> [username\_configuration](#input\_username\_configuration) | The Username Configuration. Setting `case_sensitive` specifies whether username case sensitivity will be applied for all users in the user pool through Cognito APIs | `map(any)` | `{}` | no |
 | <a name="input_verification_message_template"></a> [verification\_message\_template](#input\_verification\_message\_template) | The verification message templates configuration | `map(any)` | `{}` | no |
@@ -446,7 +449,7 @@ components:
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_arn"></a> [arn](#output\_arn) | The ARN of the User Pool |
 | <a name="output_client_ids"></a> [client\_ids](#output\_client\_ids) | The ids of the User Pool clients |
 | <a name="output_client_ids_map"></a> [client\_ids\_map](#output\_client\_ids\_map) | The IDs map of the User Pool clients |

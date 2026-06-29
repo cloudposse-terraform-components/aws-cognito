@@ -1,6 +1,7 @@
 import:
   - orgs/default/test/_defaults
   - catalog/usecase/basic
+  - catalog/usecase/managed-login
   - catalog/usecase/disabled
   - catalog/usecase/risk-config-empty
   - catalog/usecase/risk-config-account-takeover

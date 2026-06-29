@@ -334,6 +334,17 @@ variable "user_pool_add_ons_advanced_security_mode" {
   default     = null
 }
 
+variable "user_pool_tier" {
+  description = "The user pool feature plan. Must be one of `LITE`, `ESSENTIALS`, or `PLUS`"
+  type        = string
+  default     = "ESSENTIALS"
+
+  validation {
+    condition     = contains(["LITE", "ESSENTIALS", "PLUS"], var.user_pool_tier)
+    error_message = "user_pool_tier must be one of LITE, ESSENTIALS, or PLUS."
+  }
+}
+
 variable "verification_message_template" {
   description = "The verification message templates configuration"
   type        = map(any)
@@ -368,6 +379,17 @@ variable "domain_certificate_arn" {
   description = "The ARN of an ISSUED ACM certificate in `us-east-1` for a custom domain"
   type        = string
   default     = null
+}
+
+variable "managed_login_version" {
+  description = "The managed login version for the user pool domain. Use `1` for hosted UI classic or `2` for managed login"
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = contains([1, 2], var.managed_login_version)
+    error_message = "managed_login_version must be 1 or 2."
+  }
 }
 
 variable "clients" {

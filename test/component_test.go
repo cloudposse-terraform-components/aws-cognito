@@ -62,7 +62,36 @@ func (s *ComponentSuite) TestCognito() {
 	assert.Greater(s.T(), len(clientIDMap), 0)
 
 	scopeIdentifiers := atmos.OutputList(s.T(), options, "resource_servers_scope_identifiers")
-	assert.GreaterOrEqual(s.T(), len(scopeIdentifiers), 0)
+	assert.Empty(s.T(), scopeIdentifiers)
+
+	s.DriftTest(component, stack, &inputs)
+}
+
+func (s *ComponentSuite) TestManagedLogin() {
+	const component = "cognito/managed-login"
+	const stack = "default-test"
+
+	subdomain := strings.ToLower(random.UniqueId())
+	cognitoDomain := fmt.Sprintf("%s-managed-login-cptest", subdomain)
+	fullDomain := fmt.Sprintf("%s.managed-login.cptest.app", subdomain)
+
+	inputs := map[string]any{
+		"domain":                      cognitoDomain,
+		"client_default_redirect_uri": fmt.Sprintf("https://%s", fullDomain),
+		"client_callback_urls": []string{
+			fmt.Sprintf("https://%s", fullDomain),
+		},
+	}
+
+	defer s.DestroyAtmosComponent(s.T(), component, stack, &inputs)
+	options, _ := s.DeployAtmosComponent(s.T(), component, stack, &inputs)
+	assert.NotNil(s.T(), options)
+
+	userPoolID := atmos.Output(s.T(), options, "id")
+	assert.True(s.T(), strings.HasPrefix(userPoolID, "us-east-2"))
+
+	domainCFArn := atmos.Output(s.T(), options, "domain_cloudfront_distribution_arn")
+	assert.Contains(s.T(), domainCFArn, ".cloudfront.")
 
 	s.DriftTest(component, stack, &inputs)
 }
