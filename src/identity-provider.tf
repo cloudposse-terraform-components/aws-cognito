@@ -9,4 +9,18 @@ resource "aws_cognito_identity_provider" "identity_provider" {
   attribute_mapping = lookup(element(var.identity_providers, count.index), "attribute_mapping", {})
   idp_identifiers   = lookup(element(var.identity_providers, count.index), "idp_identifiers", [])
   provider_details  = lookup(element(var.identity_providers, count.index), "provider_details", {})
+
+  lifecycle {
+    # For SAML providers configured via `MetadataURL`, Cognito derives and injects
+    # additional `provider_details` keys that are returned by the API but are never
+    # present in the input `provider_details` map: the active encryption certificate
+    # and the SSO/SLO redirect binding URIs. Without ignoring them, every plan tries
+    # to remove them and Cognito re-adds them, producing perpetual drift. Ignore only
+    # these server-managed keys so genuine changes (e.g. `MetadataURL`) still apply.
+    ignore_changes = [
+      provider_details["ActiveEncryptionCertificate"],
+      provider_details["SSORedirectBindingURI"],
+      provider_details["SLORedirectBindingURI"],
+    ]
+  }
 }
